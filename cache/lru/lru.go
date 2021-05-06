@@ -3,7 +3,6 @@ package lru
 import (
 	"errors"
 	"hash/fnv"
-	"time"
 
 	"github.com/cyningsun/edge"
 )
@@ -70,7 +69,7 @@ func New(opts ...Opt) (edge.Cache, error) {
 	}, nil
 }
 
-func (c *cache) Set(key string, val interface{}, d time.Duration) {
+func (c *cache) Set(key string, val interface{}) {
 	seg := c.segmentFor(key)
 	seg.Add(key, val)
 }

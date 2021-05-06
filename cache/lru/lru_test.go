@@ -55,7 +55,7 @@ func TestLRU_SegmentBalance(t *testing.T) {
 		t.Fatalf("err: %v", err)
 	}
 	for i := int64(0); i < 8192; i++ {
-		l.Set(strconv.FormatInt(i, 10), i, 0)
+		l.Set(strconv.FormatInt(i, 10), i)
 	}
 	//segment balance
 	segments := l.(*cache).segments
@@ -76,7 +76,7 @@ func TestLRU_Add(t *testing.T) {
 		t.Fatalf("err: %v", err)
 	}
 	for i := int64(0); i < 2*8192; i++ {
-		l.Set(strconv.FormatInt(i, 10), i, 0)
+		l.Set(strconv.FormatInt(i, 10), i)
 	}
 	threshold := 0.5
 	for i := int64(0); i < int64(8192*(1-threshold)); i++ {
@@ -87,6 +87,25 @@ func TestLRU_Add(t *testing.T) {
 	for i := int64(8192 * (1 + threshold)); i < 2*8192; i++ {
 		if _, ok := l.Get(strconv.FormatInt(i, 10)); !ok {
 			t.Fatalf("should exist:%v", i)
+		}
+	}
+}
+
+func TestLRU_Delete(t *testing.T) {
+	l, err := New(WithCapacity(8192), WithConcurrency(1))
+	if err != nil {
+		t.Fatalf("err: %v", err)
+	}
+	for i := int64(0); i < 2*8192; i++ {
+		l.Set(strconv.FormatInt(i, 10), i)
+	}
+	threshold := 0.5
+	for i := int64(8192 * (1 + threshold)); i < 2*8192; i++ {
+		l.Delete(strconv.FormatInt(i, 10))
+	}
+	for i := int64(8192 * (1 + threshold)); i < 2*8192; i++ {
+		if _, ok := l.Get(strconv.FormatInt(i, 10)); ok {
+			t.Fatalf("should not exist:%v", i)
 		}
 	}
 }
