@@ -15,7 +15,7 @@ type entry struct {
 type segment struct {
 	cache map[interface{}]*list.Element
 	ll    *list.List
-	mtx   sync.Mutex
+	mtx   sync.RWMutex
 	cap   int
 }
 
@@ -77,8 +77,8 @@ func (s *segment) Delete(key Key) bool {
 }
 
 func (s *segment) Exists(key Key) bool {
-	s.mtx.Lock()
-	defer s.mtx.Unlock()
+	s.mtx.RLock()
+	defer s.mtx.RUnlock()
 
 	if s.cache == nil {
 		return false
@@ -88,8 +88,8 @@ func (s *segment) Exists(key Key) bool {
 }
 
 func (s *segment) Len() int {
-	s.mtx.Lock()
-	defer s.mtx.Unlock()
+	s.mtx.RLock()
+	defer s.mtx.RUnlock()
 
 	if s.cache == nil {
 		return 0

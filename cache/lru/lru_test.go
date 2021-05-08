@@ -70,7 +70,7 @@ func TestLRU_SegmentBalance(t *testing.T) {
 	}
 }
 
-func TestLRU_Add(t *testing.T) {
+func TestLRU_SetGet(t *testing.T) {
 	l, err := New(WithCapacity(8192), WithConcurrency(1))
 	if err != nil {
 		t.Fatalf("err: %v", err)
