@@ -1,3 +1,4 @@
+// Package edge An open-source library for golang developer
 package edge
 
 // Cache is the common interface implemented by many kinds of cache algorithms
