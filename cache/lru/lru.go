@@ -1,3 +1,4 @@
+// Package lru implements lru algorithm using linked list and hash map
 package lru
 
 import (
@@ -7,6 +8,8 @@ import (
 	"github.com/cyningsun/edge"
 )
 
+// cache is concurrent safe lru cache.
+// It using multi-segment to miniable RWMutex impact on performance
 type cache struct {
 	segments     []*segment
 	segmentMask  uint32
@@ -69,9 +72,9 @@ func New(opts ...Opt) (edge.Cache, error) {
 	}, nil
 }
 
-func (c *cache) Set(key string, val interface{}) {
+func (c *cache) Set(key string, val interface{}) interface{} {
 	seg := c.segmentFor(key)
-	seg.Add(key, val)
+	return seg.Set(key, val)
 }
 
 func (c *cache) Get(key string) (value interface{}, ok bool) {

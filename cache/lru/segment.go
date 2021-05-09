@@ -5,10 +5,8 @@ import (
 	"sync"
 )
 
-type Key interface{}
-
 type entry struct {
-	key Key
+	key string
 	val interface{}
 }
 
@@ -27,7 +25,7 @@ func newSegment(c int) *segment {
 	}
 }
 
-func (s *segment) Add(key Key, val interface{}) {
+func (s *segment) Set(key string, val interface{}) interface{} {
 	s.mtx.Lock()
 	defer s.mtx.Unlock()
 
@@ -37,8 +35,9 @@ func (s *segment) Add(key Key, val interface{}) {
 	}
 	if found, ok := s.cache[key]; ok {
 		s.ll.MoveToFront(found)
+		oldVal := found.Value.(*entry).val
 		found.Value.(*entry).val = val
-		return
+		return oldVal
 	}
 	new := s.ll.PushFront(&entry{key, val})
 	s.cache[key] = new
@@ -46,9 +45,10 @@ func (s *segment) Add(key Key, val interface{}) {
 	if s.cap != 0 && s.ll.Len() > s.cap {
 		s.removeOldest()
 	}
+	return nil
 }
 
-func (s *segment) Get(key Key) (val interface{}, ok bool) {
+func (s *segment) Get(key string) (val interface{}, ok bool) {
 	s.mtx.Lock()
 	defer s.mtx.Unlock()
 
@@ -62,7 +62,7 @@ func (s *segment) Get(key Key) (val interface{}, ok bool) {
 	return
 }
 
-func (s *segment) Delete(key Key) bool {
+func (s *segment) Delete(key string) bool {
 	s.mtx.Lock()
 	defer s.mtx.Unlock()
 
@@ -76,7 +76,7 @@ func (s *segment) Delete(key Key) bool {
 	return hit
 }
 
-func (s *segment) Exists(key Key) bool {
+func (s *segment) Exists(key string) bool {
 	s.mtx.RLock()
 	defer s.mtx.RUnlock()
 
