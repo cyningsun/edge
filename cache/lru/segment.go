@@ -26,6 +26,7 @@ func newSegment(c int) *segment {
 }
 
 func (s *segment) Set(key string, val interface{}) interface{} {
+	m.Set.Add(1)
 	s.mtx.Lock()
 	defer s.mtx.Unlock()
 
@@ -43,12 +44,14 @@ func (s *segment) Set(key string, val interface{}) interface{} {
 	s.cache[key] = new
 
 	if s.cap != 0 && s.ll.Len() > s.cap {
+		m.Evict.Add(1)
 		s.removeOldest()
 	}
 	return nil
 }
 
 func (s *segment) Get(key string) (val interface{}, ok bool) {
+	m.Get.Add(1)
 	s.mtx.Lock()
 	defer s.mtx.Unlock()
 
@@ -56,6 +59,7 @@ func (s *segment) Get(key string) (val interface{}, ok bool) {
 		return
 	}
 	if found, hit := s.cache[key]; hit {
+		m.Hit.Add(1)
 		s.ll.MoveToFront(found)
 		return found.Value.(*entry).val, true
 	}
@@ -63,6 +67,7 @@ func (s *segment) Get(key string) (val interface{}, ok bool) {
 }
 
 func (s *segment) Delete(key string) bool {
+	m.Delete.Add(1)
 	s.mtx.Lock()
 	defer s.mtx.Unlock()
 
@@ -77,6 +82,7 @@ func (s *segment) Delete(key string) bool {
 }
 
 func (s *segment) Exists(key string) bool {
+	m.Exists.Add(1)
 	s.mtx.RLock()
 	defer s.mtx.RUnlock()
 
