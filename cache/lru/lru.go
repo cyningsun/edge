@@ -9,7 +9,7 @@ import (
 )
 
 // cache is concurrent safe lru cache.
-// It using multi-segment to miniable RWMutex impact on performance
+// It using multi-segment to minimize RWMutex impact on performance
 type cache struct {
 	segments     []*segment
 	segmentMask  uint32
