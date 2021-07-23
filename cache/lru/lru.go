@@ -4,8 +4,6 @@ package lru
 import (
 	"errors"
 	"hash/fnv"
-
-	"github.com/cyningsun/edge"
 )
 
 // cache is concurrent safe lru cache.
@@ -17,7 +15,7 @@ type cache struct {
 	capacity     int
 }
 
-func New(opts ...Opt) (edge.Cache, error) {
+func New(opts ...Opt) (*cache, error) {
 	options := &options{
 		concurrency: 16,
 		capacity:    8192,
