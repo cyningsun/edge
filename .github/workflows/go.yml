@@ -4,10 +4,10 @@ on:
   push:
     tags:
       - v*
-      - feature*
     branches:
       - master
       - main
+      - feature*
   pull_request:
 
 jobs:
