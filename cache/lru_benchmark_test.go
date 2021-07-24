@@ -10,37 +10,37 @@ import (
 
 var val = make([]byte, 1024)
 
-func BenchmarkWrite(b *testing.B) {
+func BenchmarkLRU_Write(b *testing.B) {
 	for _, concurrency := range []int{1, 16, 32} {
 		for _, capacity := range []int{2 ^ 13, 2 ^ 17, 2 ^ 21, 2 ^ 24} {
 			b.Run(fmt.Sprintf("%d-concurrency-%d-capacity", concurrency, capacity), func(b *testing.B) {
-				writeToCache(b, concurrency, capacity)
+				writeToLRU(b, concurrency, capacity)
 			})
 		}
 	}
 }
 
-func BenchmarkRead(b *testing.B) {
+func BenchmarkLRU_Read(b *testing.B) {
 	for _, concurrency := range []int{1, 16, 32} {
 		for _, capacity := range []int{2 ^ 13, 2 ^ 17, 2 ^ 21, 2 ^ 24} {
 			b.Run(fmt.Sprintf("%d-concurrency-%d-capacity", concurrency, capacity), func(b *testing.B) {
-				readFromCache(b, concurrency, capacity)
+				readFromLRU(b, concurrency, capacity)
 			})
 		}
 	}
 }
 
-func BenchmarkReadNotExists(b *testing.B) {
+func BenchmarkLRU_ReadNotExists(b *testing.B) {
 	for _, concurrency := range []int{1, 16, 32} {
 		for _, capacity := range []int{2 ^ 13, 2 ^ 17, 2 ^ 21, 2 ^ 24} {
 			b.Run(fmt.Sprintf("%d-concurrency-%d-capacity", concurrency, capacity), func(b *testing.B) {
-				readFromCacheNotExists(b, concurrency, capacity)
+				readFromLRUNotExists(b, concurrency, capacity)
 			})
 		}
 	}
 }
 
-func writeToCache(b *testing.B, concurrency, capacity int) {
+func writeToLRU(b *testing.B, concurrency, capacity int) {
 	cache, _ := NewLRU(WithConcurrency(concurrency), WithCapacity(capacity))
 	rand.Seed(time.Now().Unix())
 
@@ -56,7 +56,7 @@ func writeToCache(b *testing.B, concurrency, capacity int) {
 	})
 }
 
-func readFromCache(b *testing.B, concurrency, capacity int) {
+func readFromLRU(b *testing.B, concurrency, capacity int) {
 	cache, _ := NewLRU(WithConcurrency(concurrency), WithCapacity(capacity))
 	for i := 0; i < b.N; i++ {
 		cache.Set(strconv.Itoa(i), val)
@@ -72,7 +72,7 @@ func readFromCache(b *testing.B, concurrency, capacity int) {
 	})
 }
 
-func readFromCacheNotExists(b *testing.B, concurrency, capacity int) {
+func readFromLRUNotExists(b *testing.B, concurrency, capacity int) {
 	cache, _ := NewLRU(WithConcurrency(concurrency), WithCapacity(capacity))
 	b.ResetTimer()
 
