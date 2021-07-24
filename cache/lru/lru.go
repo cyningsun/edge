@@ -104,7 +104,7 @@ func (c *cache) Len() int {
 
 func (c *cache) segmentFor(key string) *segment {
 	h := fnv.New32a()
-	h.Write([]byte(key))
+	_, _ = h.Write([]byte(key))
 	hash := h.Sum32()
 	return c.segments[(hash>>c.segmentShift)&c.segmentMask]
 }
