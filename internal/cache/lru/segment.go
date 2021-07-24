@@ -10,22 +10,22 @@ type entry struct {
 	val interface{}
 }
 
-type segment struct {
+type Segment struct {
 	cache map[interface{}]*list.Element
 	ll    *list.List
 	mtx   sync.RWMutex
 	cap   int
 }
 
-func newSegment(c int) *segment {
-	return &segment{
+func NewSegment(c int) *Segment {
+	return &Segment{
 		cache: make(map[interface{}]*list.Element),
 		ll:    list.New(),
 		cap:   c,
 	}
 }
 
-func (s *segment) Set(key string, val interface{}) interface{} {
+func (s *Segment) Set(key string, val interface{}) interface{} {
 	m.Set.Add(1)
 	s.mtx.Lock()
 	defer s.mtx.Unlock()
@@ -50,7 +50,7 @@ func (s *segment) Set(key string, val interface{}) interface{} {
 	return nil
 }
 
-func (s *segment) Get(key string) (val interface{}, ok bool) {
+func (s *Segment) Get(key string) (val interface{}, ok bool) {
 	m.Get.Add(1)
 	s.mtx.Lock()
 	defer s.mtx.Unlock()
@@ -66,7 +66,7 @@ func (s *segment) Get(key string) (val interface{}, ok bool) {
 	return
 }
 
-func (s *segment) Delete(key string) bool {
+func (s *Segment) Delete(key string) bool {
 	m.Delete.Add(1)
 	s.mtx.Lock()
 	defer s.mtx.Unlock()
@@ -81,7 +81,7 @@ func (s *segment) Delete(key string) bool {
 	return hit
 }
 
-func (s *segment) Exists(key string) bool {
+func (s *Segment) Exists(key string) bool {
 	m.Exists.Add(1)
 	s.mtx.RLock()
 	defer s.mtx.RUnlock()
@@ -93,7 +93,7 @@ func (s *segment) Exists(key string) bool {
 	return hit
 }
 
-func (s *segment) Len() int {
+func (s *Segment) Len() int {
 	s.mtx.RLock()
 	defer s.mtx.RUnlock()
 
@@ -103,7 +103,7 @@ func (s *segment) Len() int {
 	return s.ll.Len()
 }
 
-func (s *segment) removeOldest() {
+func (s *Segment) removeOldest() {
 	if s.cache == nil {
 		return
 	}
@@ -113,7 +113,7 @@ func (s *segment) removeOldest() {
 	}
 }
 
-func (s *segment) removeElement(e *list.Element) {
+func (s *Segment) removeElement(e *list.Element) {
 	s.ll.Remove(e)
 	kv := e.Value.(*entry)
 	delete(s.cache, kv.key)

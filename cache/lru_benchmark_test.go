@@ -1,4 +1,4 @@
-package lru
+package cache
 
 import (
 	"fmt"
@@ -41,7 +41,7 @@ func BenchmarkReadNotExists(b *testing.B) {
 }
 
 func writeToCache(b *testing.B, concurrency, capacity int) {
-	cache, _ := New(WithConcurrency(concurrency), WithCapacity(capacity))
+	cache, _ := NewLRU(WithConcurrency(concurrency), WithCapacity(capacity))
 	rand.Seed(time.Now().Unix())
 
 	b.RunParallel(func(pb *testing.PB) {
@@ -57,7 +57,7 @@ func writeToCache(b *testing.B, concurrency, capacity int) {
 }
 
 func readFromCache(b *testing.B, concurrency, capacity int) {
-	cache, _ := New(WithConcurrency(concurrency), WithCapacity(capacity))
+	cache, _ := NewLRU(WithConcurrency(concurrency), WithCapacity(capacity))
 	for i := 0; i < b.N; i++ {
 		cache.Set(strconv.Itoa(i), val)
 	}
@@ -73,7 +73,7 @@ func readFromCache(b *testing.B, concurrency, capacity int) {
 }
 
 func readFromCacheNotExists(b *testing.B, concurrency, capacity int) {
-	cache, _ := New(WithConcurrency(concurrency), WithCapacity(capacity))
+	cache, _ := NewLRU(WithConcurrency(concurrency), WithCapacity(capacity))
 	b.ResetTimer()
 
 	b.RunParallel(func(pb *testing.PB) {

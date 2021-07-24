@@ -1,4 +1,4 @@
-package lru
+package cache
 
 const (
 	maxSegments = 1 << 16
