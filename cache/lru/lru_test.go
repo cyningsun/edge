@@ -42,7 +42,7 @@ func TestLRU_Concurrency(t *testing.T) {
 		if err != nil {
 			t.Fatalf("err: %v", err)
 		}
-		got := len(l.(*cache).segments)
+		got := len(l.segments)
 		if got != tc.want {
 			t.Fatalf("Concurrency expected: %v, got: %v", tc.want, got)
 		}
@@ -58,7 +58,7 @@ func TestLRU_SegmentBalance(t *testing.T) {
 		l.Set(strconv.FormatInt(i, 10), i)
 	}
 	//segment balance
-	segments := l.(*cache).segments
+	segments := l.segments
 	threshold := 0.5
 	for _, each := range segments {
 		maxlen := float64(l.Len()) * (1.0 + float64(threshold)) / float64(len(segments))
