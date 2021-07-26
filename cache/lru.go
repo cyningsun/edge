@@ -1,21 +1,22 @@
 // Package lru implements lru algorithm using linked list and hash map
-package lru
+package cache
 
 import (
 	"errors"
+	"github.com/cyningsun/edge/internal/cache/lru"
 	"hash/fnv"
 )
 
 // cache is concurrent safe lru cache.
 // It using multi-segment to minimize RWMutex impact on performance
 type cache struct {
-	segments     []*segment
+	segments     []*lru.Segment
 	segmentMask  uint32
 	segmentShift uint32
 	capacity     int
 }
 
-func New(opts ...Opt) (*cache, error) {
+func NewLRU(opts ...Opt) (*cache, error) {
 	options := &options{
 		concurrency: 16,
 		capacity:    8192,
@@ -58,9 +59,9 @@ func New(opts ...Opt) (*cache, error) {
 		cap <<= 1
 	}
 
-	segments := make([]*segment, ssize)
+	segments := make([]*lru.Segment, ssize)
 	for i := range segments {
-		segments[i] = newSegment(cap)
+		segments[i] = lru.NewSegment(cap)
 	}
 	return &cache{
 		segments:     segments,
@@ -102,7 +103,7 @@ func (c *cache) Len() int {
 	return len
 }
 
-func (c *cache) segmentFor(key string) *segment {
+func (c *cache) segmentFor(key string) *lru.Segment {
 	h := fnv.New32a()
 	_, _ = h.Write([]byte(key))
 	hash := h.Sum32()
