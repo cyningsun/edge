@@ -57,12 +57,12 @@ func TestLRU_SegmentBalance(t *testing.T) {
 	for i := int64(0); i < 8192; i++ {
 		l.Set(strconv.FormatInt(i, 10), i)
 	}
-	//segment balance
+	// segment balance
 	segments := l.segments
 	threshold := 0.5
 	for _, each := range segments {
-		maxlen := float64(l.Len()) * (1.0 + float64(threshold)) / float64(len(segments))
-		minlen := float64(l.Len()) * (1.0 - float64(threshold)) / float64(len(segments))
+		maxlen := float64(l.Len()) * (1.0 + threshold) / float64(len(segments))
+		minlen := float64(l.Len()) * (1.0 - threshold) / float64(len(segments))
 		got := float64(each.Len())
 		if got < minlen || got > maxlen {
 			t.Fatalf("segment len expected: %v, %v , got: %v", minlen, maxlen, got)

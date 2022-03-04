@@ -1,4 +1,4 @@
-package ringhash
+package hash
 
 import (
 	"fmt"
@@ -7,28 +7,30 @@ import (
 	"sort"
 	"sync"
 	"testing"
+
+	"github.com/cyningsun/edge"
 )
 
 var testRingData = map[string]*ring{
-	"zeroNodeRing": &ring{
+	"zeroNodeRing": {
 		replicas: 2,
 		sorted:   []uint32{},
-		vnodes:   map[uint32]Node{},
+		vnodes:   map[uint32]edge.Server{},
 		mtx:      sync.Mutex{},
 	},
-	"oneNodeRing": &ring{
+	"oneNodeRing": {
 		replicas: 2,
 		sorted: sorted([]uint32{
 			hash("testNode1_1"),
 			hash("testNode1_2"),
 		}),
-		vnodes: map[uint32]Node{
+		vnodes: map[uint32]edge.Server{
 			hash("testNode1_1"): testNodeData["testNode1"],
 			hash("testNode1_2"): testNodeData["testNode1"],
 		},
 		mtx: sync.Mutex{},
 	},
-	"fourNodeRing": &ring{
+	"fourNodeRing": {
 		replicas: 2,
 		sorted: sorted([]uint32{
 			hash("testNode1_1"),
@@ -41,7 +43,7 @@ var testRingData = map[string]*ring{
 			hash("testNode3_2"),
 			hash("testNode4_2"),
 		}),
-		vnodes: map[uint32]Node{
+		vnodes: map[uint32]edge.Server{
 			hash("testNode1_1"): testNodeData["testNode1"],
 			hash("testNode2_1"): testNodeData["testNode2"],
 			hash("testNode3_1"): testNodeData["testNode3"],
@@ -54,7 +56,7 @@ var testRingData = map[string]*ring{
 		},
 		mtx: sync.Mutex{},
 	},
-	"fiveNodeRing": &ring{
+	"fiveNodeRing": {
 		replicas: 2,
 		sorted: sorted([]uint32{
 			hash("testNode1_1"),
@@ -69,7 +71,7 @@ var testRingData = map[string]*ring{
 			hash("testNode4_2"),
 			hash("testNode5_2"),
 		}),
-		vnodes: map[uint32]Node{
+		vnodes: map[uint32]edge.Server{
 			hash("testNode1_1"): testNodeData["testNode1"],
 			hash("testNode2_1"): testNodeData["testNode2"],
 			hash("testNode3_1"): testNodeData["testNode3"],
@@ -87,11 +89,11 @@ var testRingData = map[string]*ring{
 }
 
 var testNodeData = map[string]testNode{
-	"testNode1": testNode{val: "testNode1"},
-	"testNode2": testNode{val: "testNode2"},
-	"testNode3": testNode{val: "testNode3"},
-	"testNode4": testNode{val: "testNode4"},
-	"testNode5": testNode{val: "testNode5"},
+	"testNode1": {val: "testNode1"},
+	"testNode2": {val: "testNode2"},
+	"testNode3": {val: "testNode3"},
+	"testNode4": {val: "testNode4"},
+	"testNode5": {val: "testNode5"},
 }
 
 func sorted(slice []uint32) []uint32 {
@@ -128,7 +130,7 @@ func TestNew(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := New(tt.args.replicas)
+			got, err := NewRing(tt.args.replicas)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("New() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -151,11 +153,11 @@ func (t testNode) String() string {
 func Test_ring_Add(t *testing.T) {
 	type fields struct {
 		replicas int
-		nodes    map[uint32]Node
+		nodes    map[uint32]edge.Server
 		sorted   []uint32
 	}
 	type args struct {
-		node Node
+		node edge.Server
 	}
 	tests := []struct {
 		name   string
@@ -234,7 +236,7 @@ func Test_hash(t *testing.T) {
 func Test_ring_Get(t *testing.T) {
 	type fields struct {
 		replicas int
-		nodes    map[uint32]Node
+		nodes    map[uint32]edge.Server
 		sorted   []uint32
 	}
 	type args struct {
@@ -244,7 +246,7 @@ func Test_ring_Get(t *testing.T) {
 		name   string
 		fields fields
 		args   args
-		want   Node
+		want   edge.Server
 	}{
 		{
 			"normal",
@@ -289,11 +291,11 @@ func Test_ring_Get(t *testing.T) {
 func Test_ring_Remove(t *testing.T) {
 	type fields struct {
 		replicas int
-		nodes    map[uint32]Node
+		nodes    map[uint32]edge.Server
 		sorted   []uint32
 	}
 	type args struct {
-		node Node
+		node edge.Server
 	}
 	tests := []struct {
 		name   string
@@ -346,8 +348,8 @@ func Test_ring_Remove(t *testing.T) {
 func TestConsistency(t *testing.T) {
 	type args struct {
 		replicas int
-		nodes1   []Node
-		nodes2   []Node
+		nodes1   []edge.Server
+		nodes2   []edge.Server
 		key      string
 	}
 	tests := []struct {
@@ -359,11 +361,11 @@ func TestConsistency(t *testing.T) {
 			"random key",
 			args{
 				2,
-				[]Node{
+				[]edge.Server{
 					testNodeData["testNode1"],
 					testNodeData["testNode2"],
 				},
-				[]Node{
+				[]edge.Server{
 					testNodeData["testNode2"],
 					testNodeData["testNode1"],
 				},
@@ -375,11 +377,11 @@ func TestConsistency(t *testing.T) {
 			"vnode1 key",
 			args{
 				1,
-				[]Node{
+				[]edge.Server{
 					testNodeData["testNode1"],
 					testNodeData["testNode2"],
 				},
-				[]Node{
+				[]edge.Server{
 					testNodeData["testNode2"],
 					testNodeData["testNode1"],
 				},
@@ -391,11 +393,11 @@ func TestConsistency(t *testing.T) {
 			"vnode2 key",
 			args{
 				2,
-				[]Node{
+				[]edge.Server{
 					testNodeData["testNode1"],
 					testNodeData["testNode2"],
 				},
-				[]Node{
+				[]edge.Server{
 					testNodeData["testNode2"],
 					testNodeData["testNode1"],
 				},
@@ -407,11 +409,11 @@ func TestConsistency(t *testing.T) {
 			"vnode3 key",
 			args{
 				2,
-				[]Node{
+				[]edge.Server{
 					testNodeData["testNode1"],
 					testNodeData["testNode2"],
 				},
-				[]Node{
+				[]edge.Server{
 					testNodeData["testNode2"],
 					testNodeData["testNode1"],
 				},
@@ -423,11 +425,11 @@ func TestConsistency(t *testing.T) {
 			"vnode4 key",
 			args{
 				2,
-				[]Node{
+				[]edge.Server{
 					testNodeData["testNode1"],
 					testNodeData["testNode2"],
 				},
-				[]Node{
+				[]edge.Server{
 					testNodeData["testNode2"],
 					testNodeData["testNode1"],
 				},
@@ -438,8 +440,8 @@ func TestConsistency(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			ring1, _ := New(tt.args.replicas)
-			ring2, _ := New(tt.args.replicas)
+			ring1, _ := NewRing(tt.args.replicas)
+			ring2, _ := NewRing(tt.args.replicas)
 			for _, each := range tt.args.nodes1 {
 				ring1.Add(each)
 			}
@@ -462,8 +464,7 @@ func BenchmarkGet128(b *testing.B) { benchmarkGet(b, 128) }
 func BenchmarkGet512(b *testing.B) { benchmarkGet(b, 512) }
 
 func benchmarkGet(b *testing.B, nodes int) {
-
-	hash, _ := New(50)
+	hash, _ := NewRing(50)
 
 	var buckets []testNode
 	for i := 0; i < nodes; i++ {
@@ -572,7 +573,7 @@ func TestKeyDistribution(t *testing.T) {
 	fmt.Print("| Name | Standard Error | 99% Confidence Interval | \n")
 	fmt.Print("|----|----|\n")
 	for _, tt := range tests {
-		h, _ := New(tt.replicas)
+		h, _ := NewRing(tt.replicas)
 		for i := 0; i < tt.nodeCnt; i++ {
 			h.Add(testNode{val: fmt.Sprintf("node-%d", i)})
 		}
@@ -615,7 +616,7 @@ func StandardDeviation(nums []uint32) (dev float64) {
 // NormalConfidenceInterval returns the 99% confidence interval for the mean
 // as two float values, the lower and the upper bounds and assuming a normal
 // distribution
-func NormalConfidenceInterval(nums []uint32) (lower float64, upper float64) {
+func NormalConfidenceInterval(nums []uint32) (lower, upper float64) {
 	conf := 2.57583 // 99% confidence for the mean, http://bit.ly/Mm05eZ
 	mean := Mean(nums)
 	dev := StandardDeviation(nums) / math.Sqrt(float64(len(nums)))

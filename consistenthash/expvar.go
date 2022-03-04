@@ -1,10 +1,10 @@
-package ringhash
+package hash
 
 import (
 	"expvar"
 )
 
-var m = struct {
+var ringVar = struct {
 	Add    *expvar.Int
 	Remove *expvar.Int
 	Get    *expvar.Int
