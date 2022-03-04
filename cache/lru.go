@@ -3,8 +3,9 @@ package cache
 
 import (
 	"errors"
-	"github.com/cyningsun/edge/internal/cache/lru"
 	"hash/fnv"
+
+	"github.com/cyningsun/edge/internal/cache/lru"
 )
 
 // cache is concurrent safe lru cache.

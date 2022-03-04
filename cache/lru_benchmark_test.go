@@ -51,7 +51,7 @@ func writeToLRU(b *testing.B, concurrency, capacity int) {
 		b.ReportAllocs()
 		for pb.Next() {
 			cache.Set(fmt.Sprintf("key-%d-%d", id, counter), val)
-			counter = counter + 1
+			counter++
 		}
 	})
 }

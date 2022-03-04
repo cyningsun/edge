@@ -10,13 +10,13 @@ import (
 )
 
 var testRingData = map[string]*ring{
-	"zeroNodeRing": &ring{
+	"zeroNodeRing": {
 		replicas: 2,
 		sorted:   []uint32{},
 		vnodes:   map[uint32]Node{},
 		mtx:      sync.Mutex{},
 	},
-	"oneNodeRing": &ring{
+	"oneNodeRing": {
 		replicas: 2,
 		sorted: sorted([]uint32{
 			hash("testNode1_1"),
@@ -28,7 +28,7 @@ var testRingData = map[string]*ring{
 		},
 		mtx: sync.Mutex{},
 	},
-	"fourNodeRing": &ring{
+	"fourNodeRing": {
 		replicas: 2,
 		sorted: sorted([]uint32{
 			hash("testNode1_1"),
@@ -54,7 +54,7 @@ var testRingData = map[string]*ring{
 		},
 		mtx: sync.Mutex{},
 	},
-	"fiveNodeRing": &ring{
+	"fiveNodeRing": {
 		replicas: 2,
 		sorted: sorted([]uint32{
 			hash("testNode1_1"),
@@ -87,11 +87,11 @@ var testRingData = map[string]*ring{
 }
 
 var testNodeData = map[string]testNode{
-	"testNode1": testNode{val: "testNode1"},
-	"testNode2": testNode{val: "testNode2"},
-	"testNode3": testNode{val: "testNode3"},
-	"testNode4": testNode{val: "testNode4"},
-	"testNode5": testNode{val: "testNode5"},
+	"testNode1": {val: "testNode1"},
+	"testNode2": {val: "testNode2"},
+	"testNode3": {val: "testNode3"},
+	"testNode4": {val: "testNode4"},
+	"testNode5": {val: "testNode5"},
 }
 
 func sorted(slice []uint32) []uint32 {
@@ -462,7 +462,6 @@ func BenchmarkGet128(b *testing.B) { benchmarkGet(b, 128) }
 func BenchmarkGet512(b *testing.B) { benchmarkGet(b, 512) }
 
 func benchmarkGet(b *testing.B, nodes int) {
-
 	hash, _ := New(50)
 
 	var buckets []testNode
@@ -615,7 +614,7 @@ func StandardDeviation(nums []uint32) (dev float64) {
 // NormalConfidenceInterval returns the 99% confidence interval for the mean
 // as two float values, the lower and the upper bounds and assuming a normal
 // distribution
-func NormalConfidenceInterval(nums []uint32) (lower float64, upper float64) {
+func NormalConfidenceInterval(nums []uint32) (lower, upper float64) {
 	conf := 2.57583 // 99% confidence for the mean, http://bit.ly/Mm05eZ
 	mean := Mean(nums)
 	dev := StandardDeviation(nums) / math.Sqrt(float64(len(nums)))
