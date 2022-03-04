@@ -1,2 +1,2 @@
 # edge
-An open-source library for golang developer
+An open-source **industrial-strength** library for golang developer

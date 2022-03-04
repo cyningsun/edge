@@ -1,4 +1,4 @@
-package lru
+package cache
 
 import (
 	"strconv"
@@ -16,7 +16,7 @@ func TestLRU_Capacity(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		l, err := New(WithCapacity(tc.input))
+		l, err := NewLRU(WithCapacity(tc.input))
 		if err != nil {
 			t.Fatalf("err: %v", err)
 		}
@@ -38,11 +38,11 @@ func TestLRU_Concurrency(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		l, err := New(WithConcurrency(tc.input))
+		l, err := NewLRU(WithConcurrency(tc.input))
 		if err != nil {
 			t.Fatalf("err: %v", err)
 		}
-		got := len(l.(*cache).segments)
+		got := len(l.segments)
 		if got != tc.want {
 			t.Fatalf("Concurrency expected: %v, got: %v", tc.want, got)
 		}
@@ -50,7 +50,7 @@ func TestLRU_Concurrency(t *testing.T) {
 }
 
 func TestLRU_SegmentBalance(t *testing.T) {
-	l, err := New(WithCapacity(8192))
+	l, err := NewLRU(WithCapacity(8192))
 	if err != nil {
 		t.Fatalf("err: %v", err)
 	}
@@ -58,7 +58,7 @@ func TestLRU_SegmentBalance(t *testing.T) {
 		l.Set(strconv.FormatInt(i, 10), i)
 	}
 	//segment balance
-	segments := l.(*cache).segments
+	segments := l.segments
 	threshold := 0.5
 	for _, each := range segments {
 		maxlen := float64(l.Len()) * (1.0 + float64(threshold)) / float64(len(segments))
@@ -71,7 +71,7 @@ func TestLRU_SegmentBalance(t *testing.T) {
 }
 
 func TestLRU_SetGet(t *testing.T) {
-	l, err := New(WithCapacity(8192), WithConcurrency(1))
+	l, err := NewLRU(WithCapacity(8192), WithConcurrency(1))
 	if err != nil {
 		t.Fatalf("err: %v", err)
 	}
@@ -92,7 +92,7 @@ func TestLRU_SetGet(t *testing.T) {
 }
 
 func TestLRU_Delete(t *testing.T) {
-	l, err := New(WithCapacity(8192), WithConcurrency(1))
+	l, err := NewLRU(WithCapacity(8192), WithConcurrency(1))
 	if err != nil {
 		t.Fatalf("err: %v", err)
 	}
