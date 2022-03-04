@@ -3,9 +3,13 @@ package cache
 
 import (
 	"errors"
-	"github.com/cyningsun/edge/internal/cache/lru"
 	"hash/fnv"
+
+	"github.com/cyningsun/edge"
+	"github.com/cyningsun/edge/internal/cache/lru"
 )
+
+var _ edge.Cache = &cache{}
 
 // cache is concurrent safe lru cache.
 // It using multi-segment to minimize RWMutex impact on performance

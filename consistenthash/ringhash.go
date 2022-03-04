@@ -6,25 +6,16 @@ import (
 	"sort"
 	"strconv"
 	"sync"
+
+	"github.com/cyningsun/edge"
 )
 
-/*
-   Consistent hashing was first described in a paper, ["Consistent hashing and random trees: Distributed caching protocols for relieving hot spots on the World Wide Web (1997)"](http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.147.1879) by David Karger et al.
-   It is used in distributed storage systems like Amazon Dynamo and memcached.
-*/
-
-const (
-	minReplicas = 1
-)
-
-type Node interface {
-	String() string
-}
+var _ edge.ConsistentHash = &ring{}
 
 type ring struct {
 	replicas int
 
-	vnodes map[uint32]Node
+	vnodes map[uint32]edge.Server
 	sorted []uint32
 	mtx    sync.Mutex
 }
@@ -35,12 +26,12 @@ func NewRing(replicas int) (*ring, error) {
 	}
 	return &ring{
 		replicas: replicas,
-		vnodes:   map[uint32]Node{},
+		vnodes:   map[uint32]edge.Server{},
 		sorted:   []uint32{},
 	}, nil
 }
 
-func (r *ring) Add(node Node) {
+func (r *ring) Add(node edge.Server) {
 	ringVar.Add.Add(1)
 
 	newHash := make([]uint32, 0, r.replicas)
@@ -71,7 +62,7 @@ func (r *ring) contains(h uint32) bool {
 	return false
 }
 
-func (r *ring) Remove(node Node) {
+func (r *ring) Remove(node edge.Server) {
 	ringVar.Remove.Add(1)
 
 	newHash := make([]uint32, 0, r.replicas)
@@ -96,7 +87,7 @@ func (r *ring) Remove(node Node) {
 	sort.Slice(r.sorted, func(i, j int) bool { return r.sorted[i] < r.sorted[j] })
 }
 
-func (r *ring) Get(key string) Node {
+func (r *ring) Get(key string) edge.Server {
 	ringVar.Get.Add(1)
 
 	if len(r.sorted) == 0 {
