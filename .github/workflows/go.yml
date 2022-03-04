@@ -8,6 +8,8 @@ on:
       - master
       - main
       - feature*
+      - tech*
+      - bugfix*
   pull_request:
 
 jobs:
@@ -31,4 +33,5 @@ jobs:
     - name: golangci-lint
       uses: golangci/golangci-lint-action@v2
       with:
-        version: v1.29
+        version: v1.44.0
+        args: --verbose
