@@ -1,4 +1,4 @@
-package ringhash
+package hash
 
 import (
 	"fmt"
@@ -29,7 +29,7 @@ type ring struct {
 	mtx    sync.Mutex
 }
 
-func New(replicas int) (*ring, error) {
+func NewRing(replicas int) (*ring, error) {
 	if replicas < minReplicas {
 		return nil, fmt.Errorf("min validate replicas:%v, input:%v", minReplicas, replicas)
 	}
@@ -41,7 +41,7 @@ func New(replicas int) (*ring, error) {
 }
 
 func (r *ring) Add(node Node) {
-	m.Add.Add(1)
+	ringVar.Add.Add(1)
 
 	newHash := make([]uint32, 0, r.replicas)
 	for i := 1; i <= r.replicas; i++ {
@@ -72,7 +72,7 @@ func (r *ring) contains(h uint32) bool {
 }
 
 func (r *ring) Remove(node Node) {
-	m.Remove.Add(1)
+	ringVar.Remove.Add(1)
 
 	newHash := make([]uint32, 0, r.replicas)
 	for i := 1; i <= r.replicas; i++ {
@@ -97,7 +97,7 @@ func (r *ring) Remove(node Node) {
 }
 
 func (r *ring) Get(key string) Node {
-	m.Get.Add(1)
+	ringVar.Get.Add(1)
 
 	if len(r.sorted) == 0 {
 		return nil
