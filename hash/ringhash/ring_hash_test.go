@@ -2,6 +2,7 @@ package ringhash
 
 import (
 	"fmt"
+	"math"
 	"reflect"
 	"sort"
 	"sync"
@@ -489,7 +490,7 @@ func benchmarkGet(b *testing.B, nodes int) {
 	}
 }
 
-// https://arxiv.org/pdf/1406.2294.pdf
+// TestKeyDistribution ref:https://arxiv.org/pdf/1406.2294.pdf
 func TestKeyDistribution(t *testing.T) {
 	tests := []struct {
 		replicas int
@@ -500,7 +501,31 @@ func TestKeyDistribution(t *testing.T) {
 			nodeCnt:  3,
 		},
 		{
+			replicas: 10,
+			nodeCnt:  3,
+		},
+		{
+			replicas: 100,
+			nodeCnt:  3,
+		},
+		{
+			replicas: 1000,
+			nodeCnt:  3,
+		},
+		{
 			replicas: 1,
+			nodeCnt:  10,
+		},
+		{
+			replicas: 10,
+			nodeCnt:  10,
+		},
+		{
+			replicas: 100,
+			nodeCnt:  10,
+		},
+		{
+			replicas: 1000,
 			nodeCnt:  10,
 		},
 		{
@@ -508,7 +533,31 @@ func TestKeyDistribution(t *testing.T) {
 			nodeCnt:  20,
 		},
 		{
+			replicas: 10,
+			nodeCnt:  20,
+		},
+		{
+			replicas: 100,
+			nodeCnt:  20,
+		},
+		{
+			replicas: 1000,
+			nodeCnt:  20,
+		},
+		{
 			replicas: 1,
+			nodeCnt:  50,
+		},
+		{
+			replicas: 10,
+			nodeCnt:  50,
+		},
+		{
+			replicas: 100,
+			nodeCnt:  50,
+		},
+		{
+			replicas: 1000,
 			nodeCnt:  50,
 		},
 		{
@@ -517,59 +566,11 @@ func TestKeyDistribution(t *testing.T) {
 		},
 		{
 			replicas: 10,
-			nodeCnt:  3,
-		},
-		{
-			replicas: 10,
-			nodeCnt:  10,
-		},
-		{
-			replicas: 10,
-			nodeCnt:  20,
-		},
-		{
-			replicas: 10,
-			nodeCnt:  50,
-		},
-		{
-			replicas: 10,
 			nodeCnt:  100,
 		},
 		{
 			replicas: 100,
-			nodeCnt:  3,
-		},
-		{
-			replicas: 100,
-			nodeCnt:  10,
-		},
-		{
-			replicas: 100,
-			nodeCnt:  20,
-		},
-		{
-			replicas: 100,
-			nodeCnt:  50,
-		},
-		{
-			replicas: 100,
 			nodeCnt:  100,
-		},
-		{
-			replicas: 1000,
-			nodeCnt:  3,
-		},
-		{
-			replicas: 1000,
-			nodeCnt:  10,
-		},
-		{
-			replicas: 1000,
-			nodeCnt:  20,
-		},
-		{
-			replicas: 1000,
-			nodeCnt:  50,
 		},
 		{
 			replicas: 1000,
@@ -577,29 +578,66 @@ func TestKeyDistribution(t *testing.T) {
 		},
 	}
 
+	fmt.Print("| Name | Standard Error | 99% Confidence Interval | \n")
+	fmt.Print("|----|----|\n")
 	for _, tt := range tests {
 		h, _ := New(tt.replicas)
 		for i := 0; i < tt.nodeCnt; i++ {
 			h.Add(testNode{val: fmt.Sprintf("node-%d", i)})
 		}
 
-		// totalBuckets := tt.replicas * tt.nodeCnt
-		// idealInterval := math.MaxUint32 / uint32(totalBuckets)
-		// intervalDeviation := make([]float64, 0, totalBuckets)
-		// bucketInterval := math.MaxUint32 - h.sorted[totalBuckets-1] + h.sorted[0]
-		// intervalDeviation = append(intervalDeviation, math.Abs(float64(bucketInterval-idealInterval)/float64(idealInterval)))
-		// for i := 1; i < totalBuckets; i++ {
-		// 	bucketInterval = h.sorted[i] - h.sorted[i-1]
-		// 	intervalDeviation = append(intervalDeviation, math.Abs(float64(bucketInterval-idealInterval)/float64(idealInterval)))
-		// }
-		// if len(intervalDeviation) != totalBuckets {
-		// 	t.Fatalf("totalBuckets:%v, bucketInterval:%v, ", totalBuckets, bucketInterval)
-		// }
-		// stdDev, _ := stats.StandardDeviation(intervalDeviation)
-		// logBucket := math.Log10(float64(totalBuckets))
-		// mean, _ := stats.Mean(intervalDeviation)
-		// standErr := stdDev / mean
-		// t.Log("Name | Standard Error | 99% Confidence Interval")
-		// t.Logf("%v(replicas)-%v(nodeCnt) | %v  | (%v,%v)\n", tt.replicas, tt.nodeCnt, standErr, mean-2.576*stdDev/logBucket, mean+2.576*stdDev/logBucket)
+		totalBuckets := tt.replicas * tt.nodeCnt
+		allBucketInterval := make([]uint32, 0, totalBuckets)
+
+		bucketInterval := math.MaxUint32 - h.sorted[totalBuckets-1] + h.sorted[0]
+		allBucketInterval = append(allBucketInterval, bucketInterval)
+		for i := 1; i < totalBuckets; i++ {
+			bucketInterval = h.sorted[i] - h.sorted[i-1]
+			allBucketInterval = append(allBucketInterval, bucketInterval)
+		}
+
+		stdDev := StandardDeviation(allBucketInterval)
+		logBucket := math.Sqrt(float64(totalBuckets))
+		standErr := stdDev / logBucket
+
+		idealInterval := Mean(allBucketInterval)
+		lower, upper := NormalConfidenceInterval(allBucketInterval)
+		fmt.Printf("|%v(nodeCnt)- %v(replicas)| %7f  | (%7f,%7f)|\n", tt.nodeCnt, tt.replicas, standErr/idealInterval, lower/idealInterval, upper/idealInterval)
 	}
+}
+
+// StandardDeviation returns the standard deviation of the slice
+// as a float
+func StandardDeviation(nums []uint32) (dev float64) {
+	if len(nums) == 0 {
+		return 0.0
+	}
+
+	m := Mean(nums)
+	for _, n := range nums {
+		dev += (float64(n) - m) * (float64(n) - m)
+	}
+	dev = math.Pow(dev/float64(len(nums)), 0.5)
+	return dev
+}
+
+// NormalConfidenceInterval returns the 99% confidence interval for the mean
+// as two float values, the lower and the upper bounds and assuming a normal
+// distribution
+func NormalConfidenceInterval(nums []uint32) (lower float64, upper float64) {
+	conf := 2.57583 // 99% confidence for the mean, http://bit.ly/Mm05eZ
+	mean := Mean(nums)
+	dev := StandardDeviation(nums) / math.Sqrt(float64(len(nums)))
+	return mean - dev*conf, mean + dev*conf
+}
+
+// Mean returns the mean of an integer array as a float
+func Mean(nums []uint32) (mean float64) {
+	if len(nums) == 0 {
+		return 0.0
+	}
+	for _, n := range nums {
+		mean += float64(n)
+	}
+	return mean / float64(len(nums))
 }
