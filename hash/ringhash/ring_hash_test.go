@@ -153,7 +153,6 @@ func Test_ring_Add(t *testing.T) {
 		replicas int
 		nodes    map[uint32]Node
 		sorted   []uint32
-		mtx      sync.Mutex
 	}
 	type args struct {
 		node Node
@@ -170,7 +169,6 @@ func Test_ring_Add(t *testing.T) {
 				replicas: testRingData["zeroNodeRing"].replicas,
 				nodes:    testRingData["zeroNodeRing"].vnodes,
 				sorted:   testRingData["zeroNodeRing"].sorted,
-				mtx:      testRingData["zeroNodeRing"].mtx,
 			},
 			args{
 				node: testNodeData["testNode1"],
@@ -183,7 +181,6 @@ func Test_ring_Add(t *testing.T) {
 				replicas: testRingData["oneNodeRing"].replicas,
 				nodes:    testRingData["oneNodeRing"].vnodes,
 				sorted:   testRingData["oneNodeRing"].sorted,
-				mtx:      testRingData["oneNodeRing"].mtx,
 			},
 			args{
 				node: testNodeData["testNode1"],
@@ -197,7 +194,7 @@ func Test_ring_Add(t *testing.T) {
 				replicas: tt.fields.replicas,
 				vnodes:   tt.fields.nodes,
 				sorted:   tt.fields.sorted,
-				mtx:      tt.fields.mtx,
+				mtx:      sync.Mutex{},
 			}
 			got.Add(tt.args.node)
 
@@ -239,7 +236,6 @@ func Test_ring_Get(t *testing.T) {
 		replicas int
 		nodes    map[uint32]Node
 		sorted   []uint32
-		mtx      sync.Mutex
 	}
 	type args struct {
 		key string
@@ -256,7 +252,6 @@ func Test_ring_Get(t *testing.T) {
 				replicas: testRingData["fiveNodeRing"].replicas,
 				nodes:    testRingData["fiveNodeRing"].vnodes,
 				sorted:   testRingData["fiveNodeRing"].sorted,
-				mtx:      testRingData["fiveNodeRing"].mtx,
 			},
 			args{
 				"key",
@@ -269,7 +264,6 @@ func Test_ring_Get(t *testing.T) {
 				replicas: testRingData["zeroNodeRing"].replicas,
 				nodes:    testRingData["zeroNodeRing"].vnodes,
 				sorted:   testRingData["zeroNodeRing"].sorted,
-				mtx:      testRingData["zeroNodeRing"].mtx,
 			},
 			args{
 				"key",
@@ -283,7 +277,7 @@ func Test_ring_Get(t *testing.T) {
 				replicas: tt.fields.replicas,
 				vnodes:   tt.fields.nodes,
 				sorted:   tt.fields.sorted,
-				mtx:      tt.fields.mtx,
+				mtx:      sync.Mutex{},
 			}
 			if got := r.Get(tt.args.key); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("ring.Get() = %v, want %v", got, tt.want)
@@ -297,7 +291,6 @@ func Test_ring_Remove(t *testing.T) {
 		replicas int
 		nodes    map[uint32]Node
 		sorted   []uint32
-		mtx      sync.Mutex
 	}
 	type args struct {
 		node Node
@@ -314,7 +307,6 @@ func Test_ring_Remove(t *testing.T) {
 				replicas: testRingData["fiveNodeRing"].replicas,
 				nodes:    testRingData["fiveNodeRing"].vnodes,
 				sorted:   testRingData["fiveNodeRing"].sorted,
-				mtx:      testRingData["fiveNodeRing"].mtx,
 			},
 			args{
 				testNodeData["testNode5"],
@@ -327,7 +319,6 @@ func Test_ring_Remove(t *testing.T) {
 				replicas: testRingData["oneNodeRing"].replicas,
 				nodes:    testRingData["oneNodeRing"].vnodes,
 				sorted:   testRingData["oneNodeRing"].sorted,
-				mtx:      testRingData["oneNodeRing"].mtx,
 			},
 			args{
 				testNodeData["testNode2"],
@@ -341,7 +332,7 @@ func Test_ring_Remove(t *testing.T) {
 				replicas: tt.fields.replicas,
 				vnodes:   tt.fields.nodes,
 				sorted:   tt.fields.sorted,
-				mtx:      tt.fields.mtx,
+				mtx:      sync.Mutex{},
 			}
 			got.Remove(tt.args.node)
 
