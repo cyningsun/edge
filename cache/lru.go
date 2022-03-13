@@ -20,6 +20,13 @@ type cache struct {
 	capacity     int
 }
 
+type normalize struct {
+	size  int
+	cap   int
+	shift uint32
+	mask  uint32
+}
+
 func NewLRU(opts ...Opt) (*cache, error) {
 	options := &options{
 		concurrency: 16,
@@ -40,39 +47,46 @@ func NewLRU(opts ...Opt) (*cache, error) {
 		options.concurrency = maxSegments
 	}
 
-	// Find power-of-two sizes best matching arguments
-	sshift := 0
-	ssize := 1
-	for ssize < options.concurrency {
-		sshift++
-		ssize <<= 1
-	}
-	segmentShift := uint32(32 - sshift)
-	segmentMask := uint32(ssize - 1)
 	if options.capacity > maxCapacity {
 		options.capacity = maxCapacity
 	}
 
-	c := options.capacity / ssize
-	if c*ssize < options.capacity {
-		c++
-	}
+	// Find power-of-two sizes best matching arguments
+	normalize := bitwiseOpt(options.concurrency, options.capacity)
 
-	cap := 1
-	for cap < c {
-		cap <<= 1
-	}
-
-	segments := make([]*lru.Segment, ssize)
+	segments := make([]*lru.Segment, normalize.size)
 	for i := range segments {
-		segments[i] = lru.NewSegment(cap)
+		segments[i] = lru.NewSegment(normalize.cap)
 	}
 	return &cache{
 		segments:     segments,
-		segmentMask:  segmentMask,
-		segmentShift: segmentShift,
-		capacity:     cap * ssize,
+		segmentMask:  normalize.mask,
+		segmentShift: normalize.shift,
+		capacity:     normalize.cap * normalize.size,
 	}, nil
+}
+
+func bitwiseOpt(concurrency, capacity int) *normalize {
+	shift := 0
+	ssize := 1
+	for ssize < concurrency {
+		shift++
+		ssize <<= 1
+	}
+
+	sshift := uint32(32 - shift)
+	smask := uint32(ssize - 1)
+
+	c := capacity / ssize
+	if c*ssize < capacity {
+		c++
+	}
+
+	scap := 1
+	for scap < c {
+		scap <<= 1
+	}
+	return &normalize{ssize, scap, sshift, smask}
 }
 
 func (c *cache) Set(key string, val interface{}) interface{} {
